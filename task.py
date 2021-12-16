@@ -80,8 +80,7 @@ class Course:
             raise ValueError("Empty value")
         self.__program = value
     
-    def get_id(self):
-        return self.id
+
     
     def __str__(self):
         return f'Name of course: {self.name}, Teacher: {self.teacher}, Programm: {self.program}'
@@ -130,9 +129,7 @@ class LocalCourse(Course, ILocalCourse):
    
     
 
-    def get_id(self):
-        return self.id
- 
+
      
     def __str__(self):
         return f'Local course: {super().__str__()}'
@@ -147,8 +144,6 @@ class OffsiteCourse(Course, IOffciteCourse):
         super().__init__(name, teacher, program)
         
 
-    def get_id(self):
-        return self.id
 
     
     def __str__(self):
