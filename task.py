@@ -2,7 +2,7 @@ from abc import ABC
 from abc import abstractmethod
 import json
 import os
-count = 1 
+
 class ICourse(ABC):
     @property
     @abstractmethod
@@ -39,9 +39,7 @@ class ICourse(ABC):
 
 class Course:
     def __init__(self, name, teacher, program):
-        global count 
-        self.id = count
-        count += 1
+   
         self.name = name
         self.teacher = teacher 
         self.program = program
@@ -129,9 +127,7 @@ class ILocalCourse(ABC):
 class LocalCourse(Course, ILocalCourse):
     def __init__(self, name, teacher, program):
         super().__init__(name, teacher, program)
-        global count
-        self.id = count
-        count += 1
+   
     
 
     def get_id(self):
@@ -149,10 +145,7 @@ class IOffciteCourse(ABC):
 class OffsiteCourse(Course, IOffciteCourse):
     def __init__(self, name, teacher, program):
         super().__init__(name, teacher, program)
-        global count
-        self.id = count
-        count += 1
-    
+        
 
     def get_id(self):
         return self.id
@@ -190,19 +183,27 @@ class CoursesFactory:
         else :
             course =  OffsiteCourse(name, teacher, topics)
 
-        id = str(course.get_id())
-        with open ("Course\\file.json", "r") as file:
-            base = json.load(file)
-        if not id in base:
-            base[id] = {
+        data = {
                 "name": course.name,
                 "teacher": teacher_name,
                 "program": course.program,
                 "type": course.__class__.__name__
-                } 
-            json.dump(base, open ("Course\\file.json", "w"), indent=2)
+                }
+       
 
-    
+        if os.stat("Course\\file.json").st_size==0:
+            json.dump(data, open ("Course\\file.json", "w"), indent=2)
+        else: 
+            self.add_to_base(data)
+           
+    def add_to_base(self, data):
+            with open ("Course\\file.json", "r") as file:
+                base = json.load(file)
+                base.append(data)
+            with open ("Course\\file.json", "w") as file:    
+                json.dump(base, file, indent=2)
+            
+
     def get_all_courses(self):
         with open ("Course\\file.json", "r") as file:
             base = json.load(file)
@@ -212,6 +213,7 @@ class CoursesFactory:
 
 if __name__ == "__main__":
     x = CoursesFactory()
+    print(x.add_course())
     print(x.get_all_courses())
             
         
