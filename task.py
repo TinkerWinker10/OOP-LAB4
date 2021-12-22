@@ -1,45 +1,10 @@
-from abc import ABC
-from abc import abstractmethod
-import json
-import os
+from interface import *
+import sqlite3
+from config import *
 
-class ICourse(ABC):
-    @property
-    @abstractmethod
-    def name(self):
-        pass
-
-    @name.setter
-    @abstractmethod
-    def name(self, value):
-        pass
-
-    @property
-    @abstractmethod
-    def teacher(self):
-        pass
-
-    @teacher.setter
-    @abstractmethod
-    def teacher(self, value):
-        pass
-
-    @property
-    @abstractmethod
-    def program(self):
-        pass
-
-    @program.setter
-    @abstractmethod
-    def program(self, value):
-        pass
-
-
-
-
-class Course:
+class Course(ABC):
+    """Class which helds data about courses"""
     def __init__(self, name, teacher, program):
-   
         self.name = name
         self.teacher = teacher 
         self.program = program
@@ -85,23 +50,28 @@ class Course:
     def __str__(self):
         return f'Name of course: {self.name}, Teacher: {self.teacher}, Programm: {self.program}'
 
-class ITeacher(ABC):
-    @property
-    @abstractmethod
-    def name(self):
-        pass
-
-    @name.setter
-    @abstractmethod
-    def name(self, value):
-        pass
 
 
-class Teacher:
+class Teacher(ITeacher):
+    """Class which helds data about teacher"""
     def __init__(self, name, courses):
         self.name = name
-        self.courses = courses
-
+        self.courses = ", ".join(courses)
+        self.add_to_base()
+    
+    def add_to_base(self):
+        """Method which pulls teacher's data to the teacher_db"""
+        con = sqlite3.connect(db_name)
+        cur = con.cursor()
+        cur.execute('CREATE TABLE IF NOT EXISTS teacher_db(Name TEXT ,'
+        'Courses TEXT )')
+        con.commit()
+        cur.execute('INSERT INTO teacher_db VALUES (?,?)', (self.name, self.courses))
+        con.commit()
+        cur.close()
+        con.close()
+       
+    
     @property 
     def name(self):
         return self.__name
@@ -117,101 +87,153 @@ class Teacher:
     def __str__(self):
         return f'{self.name}' 
 
-class ILocalCourse(ABC):
-    @abstractmethod
-    def __init__(self):
-        pass
 
 
 class LocalCourse(Course, ILocalCourse):
+    """Class which inherited Course class"""
     def __init__(self, name, teacher, program):
         super().__init__(name, teacher, program)
-   
-    
 
-
-     
     def __str__(self):
         return f'Local course: {super().__str__()}'
 
-class IOffciteCourse(ABC):
-    @abstractmethod
-    def __init__(self):
-        pass
+
+
 
 class OffsiteCourse(Course, IOffciteCourse):
+    """Class which inherited Course class"""
     def __init__(self, name, teacher, program):
         super().__init__(name, teacher, program)
         
-
-
     
     def __str__(self):
         return f'Offsite course: {super().__str__()}'
 
-
-
-class CoursesFactory:
+class CourseFactory(ABC):
+    """Main class of the programm, which create instances of LocalCourse and OffsiteCourse and work with them"""
     def __init__(self):
-        pass
+       self.menu()
+    
 
-    def add_course(self):
-        while True:
-            type = input("What type of courses you want to create? 0 - local, 1 - offsite ")
-            if type == "1" or type == "0": 
-                break
-        name = input("Enter name of course: ")
-        
-        teacher_name = input("Enter teacher's name: ")
-        topics = []
-        teacher = Teacher(teacher_name, topics)
-        while True:
-            n = int(input("Enter number of topics: "))
-            if n>0:
-                break
-                 
-        for item in range (0,n):
-            value = input("Enter topic: ")
-            topics.append(value)
-        if type=="0":
-            course =  LocalCourse(name, teacher, topics)
-        else :
-            course =  OffsiteCourse(name, teacher, topics)
+    def menu(self):
+        """Simple menu to navigate through the programm"""
+        while(1==1):
+            type = input("1 - Add courses\n 2 - Show teacher's database\n 3 - Show all Courses\n 4 - Drop tables\n 0 - exit\n Your choise: ")
+            if type == "1":
+                self.add_info()
+            elif type == "2":
+                print("Teachers info: ")
+                print(self.show_info_about_teachers())
+            elif type == "3":
+                print("Courses info: ")
+                print(self.show_all_info())
+            elif type == "4":
+                self.drop_tables()
+                print("TABLES DELETED!")
+            elif type == "0":
+                quit()
 
-        data = {
-                "name": course.name,
-                "teacher": teacher_name,
-                "program": course.program,
-                "type": course.__class__.__name__
-                }
+    def drop_tables(self):
+        """Method which is used to destroy tables from database"""
+        con = sqlite3.connect(db_name)
+        cur = con.cursor()
+        cur.execute("DROP TABLE IF EXISTS courses_db")
+        con.commit()
+        cur.execute("DROP TABLE IF EXISTS  teacher_db")
+        con.commit()
+        cur.close()
+        con.close()
+
+    def add_info(self):
+        """Method which pulls data to database"""
+        con = sqlite3.connect(db_name)
+        cur = con.cursor()
+        obj = self.get_info()
+        cur.execute('CREATE TABLE IF NOT EXISTS courses_db(Name TEXT ,'
+        'Teacher TEXT, '
+        'Topics TEXT, '
+        'Type TEXT )') 
+        cur.execute('INSERT INTO courses_db(Name, Teacher, Topics, Type) VALUES (?,?,?,?)', (obj.name,obj.teacher.name, ", ".join(list(obj.program)), obj.__class__.__name__))
+        con.commit()
+        cur.close()
+        con.close()
        
 
-        if os.stat("Course\\file.json").st_size==0:
-            json.dump(data, open ("Course\\file.json", "w"), indent=2)
+    def get_info(self):
+        """Methon which get data about Course
+
+        Returns: 
+        LocalCourse: Returning class instance
+        OffsiteCourse: Returning class instance
+        
+        """
+        while 1==1:
+            type = input("Enter type of course(1 - local, 0 - Offsite): ")
+            if type == "1" or type =="0":
+                break
+        name = input("Enter name of course: ")
+        if not isinstance(name, str):
+            raise TypeError("Name must be string")
+        teacher_name = input("Enter teacher's info: ")
+        if not isinstance(teacher_name, str):
+            raise TypeError("Teacher name must be string")
+        number = input("Enter number of courses: ")
+        if int(number) <= 0:
+            raise ValueError("Number must be >0")
+        courses = []
+        for i in range(0, int(number)):
+            value = input()
+            if not isinstance(value, str):
+                raise TypeError("Course topic must be a string")
+            courses.append(value)
+            
+        teacher = Teacher(teacher_name, courses)
+        if type == "1":
+            return LocalCourse(name, teacher, courses)
         else: 
-            self.add_to_base(data)
-           
-    def add_to_base(self, data):
-            with open ("Course\\file.json", "r") as file:
-                base = json.load(file)
-                base.append(data)
-            with open ("Course\\file.json", "w") as file:    
-                json.dump(base, file, indent=2)
-            
-
-    def get_all_courses(self):
-        with open ("Course\\file.json", "r") as file:
-            base = json.load(file)
-        return "\n".join(list(map(str, base)))
-
+            return OffsiteCourse(name, teacher, courses)
         
 
-if __name__ == "__main__":
-    x = CoursesFactory()
-    print(x.add_course())
-    print(x.get_all_courses())
-            
+    def show_all_info(self):
+        """Method which returns courses info
         
-        
+        Returns: 
+        str: Returning courses_db as string or return empty error
 
+        """
+        con = sqlite3.connect(db_name)
+        cur = con.cursor()
+        cur.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='courses_db' ''')
+        if cur.fetchone()[0]==1:
+            cur.execute("SELECT * FROM courses_db")
+            result = cur.fetchall()
+            cur.close()
+            con.close()
+            return "\n".join(list(map(str, result)))
+        return f"Empty table"
+
+    def show_info_about_teachers(self):
+        """Method which returns teachers info
+        
+        Returns: 
+        str: Returning teacher_db as string or return empty error
+        
+        """
+        con = sqlite3.connect(db_name)
+        cur = con.cursor()
+        cur.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='teacher_db' ''')
+        if cur.fetchone()[0]==1:
+            cur.execute("SELECT * FROM teacher_db")
+            result = cur.fetchall()
+            cur.close()
+            con.close()
+            return "\n".join(list(map(str, result)))
+        return f"Empty table"
+
+
+
+if __name__ == '__main__':
+    x = CourseFactory()
+    
+  
 
