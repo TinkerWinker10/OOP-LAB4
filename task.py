@@ -2,59 +2,18 @@ from interface import *
 import sqlite3
 from config import *
 
-class Course(ABC):
-    """Class which helds data about courses"""
-    def __init__(self, name, teacher, program):
-        self.name = name
-        self.teacher = teacher 
-        self.program = program
-
-    @property
-    def name(self):
-        return self.__name
-
-    @name.setter
-    def name(self,value):
-        if not isinstance(value, str):
-            raise TypeError("Name must be string")
-        if not value:
-            raise ValueError("Empty value")
-        self.__name = value
-
-    @property
-    def teacher(self):
-        return self.__teacher
-
-    @teacher.setter
-    def teacher(self,value):
-        if not isinstance(value, Teacher):
-            raise TypeError("value must be instance of Teacher class")
-        if not value:
-            raise ValueError("Empty value")
-        self.__teacher = value
-
-    @property
-    def program(self):
-        return self.__program
-
-    @program.setter
-    def program(self,value):
-        if not all([isinstance(item, str)for item in value]):
-            raise TypeError("Programm must be string")
-        if not value:
-            raise ValueError("Empty value")
-        self.__program = value
-    
-
-    
-    def __str__(self):
-        return f'Name of course: {self.name}, Teacher: {self.teacher}, Programm: {self.program}'
-
 
 
 class Teacher(ITeacher):
     """Class which helds data about teacher"""
-    def __init__(self, name, courses):
+    def __init__(self, name:str, courses:str):
+        """ __init__ constructor for Teacher class.
+        
+        Param: 
+        name: name of teacher 
+        courses: list of course topics
+
+        """
         self.name = name
         self.courses = ", ".join(courses)
         self.add_to_base()
@@ -74,10 +33,12 @@ class Teacher(ITeacher):
     
     @property 
     def name(self):
+        """Getter method for name value"""
         return self.__name
     
-    @name.setter
+    @name.setter    
     def name(self,value):
+        """Setter method for name value"""
         if not isinstance(value, str):
             raise TypeError("Name must be string")
         if not value:
@@ -89,9 +50,81 @@ class Teacher(ITeacher):
 
 
 
+
+class Course(ABC):
+    """Class which helds data about courses"""
+    def __init__(self,name:str, teacher:Teacher, program:str):
+        """ __init__ constructor for Course class.
+
+        Param: 
+        name: name of course
+        teacher: instance of class Teacher 
+        programm: list of course topics
+
+        """
+        self.name = name
+        self.teacher = teacher 
+        self.program = program
+
+    @property
+    def name(self):
+        """Getter method for name value"""
+        return self.__name
+
+    @name.setter
+    def name(self,value):
+        """Setter method for name value"""
+        if not isinstance(value, str):
+            raise TypeError("Name must be string")
+        if not value:
+            raise ValueError("Empty value")
+        self.__name = value
+
+    @property
+    def teacher(self):
+        """Getter method for teacher value"""
+        return self.__teacher
+
+    @teacher.setter
+    def teacher(self,value):
+        """Setter method for teacher value"""
+        if not isinstance(value, Teacher):
+            raise TypeError("value must be instance of Teacher class")
+        if not value:
+            raise ValueError("Empty value")
+        self.__teacher = value
+
+    @property
+    def program(self):
+        """Getter method for program value"""
+        return self.__program
+
+    @program.setter
+    def program(self,value):
+        """Setter method for program value"""
+        if not all([isinstance(item, str)for item in value]):
+            raise TypeError("Programm must be string")
+        if not value:
+            raise ValueError("Empty value")
+        self.__program = value
+    
+
+    
+    def __str__(self):
+        return f'Name of course: {self.name}, Teacher: {self.teacher}, Programm: {self.program}'
+
+
 class LocalCourse(Course, ILocalCourse):
     """Class which inherited Course class"""
-    def __init__(self, name, teacher, program):
+    def __init__(self, name:str, teacher:Teacher, program:str):
+        """ __init__ constructor for LocalCourse class.
+        
+        Param: 
+        name: name of course
+        teacher: instance of class Teacher 
+        programm: list of course topics
+
+        """
         super().__init__(name, teacher, program)
 
     def __str__(self):
@@ -102,7 +135,15 @@ class LocalCourse(Course, ILocalCourse):
 
 class OffsiteCourse(Course, IOffciteCourse):
     """Class which inherited Course class"""
-    def __init__(self, name, teacher, program):
+    def __init__(self, name:str, teacher:Teacher, program:str):
+        """ __init__ constructor for OffsiteCourse class.
+        
+        Param: 
+        name: name of course
+        teacher: instance of class Teacher 
+        programm: list of course topics
+
+        """
         super().__init__(name, teacher, program)
         
     
@@ -112,7 +153,12 @@ class OffsiteCourse(Course, IOffciteCourse):
 class CourseFactory(ABC):
     """Main class of the programm, which create instances of LocalCourse and OffsiteCourse and work with them"""
     def __init__(self):
-       self.menu()
+        """ __init__ constructor for CourseFactory class.
+        
+        Constructor calls method menu() which play role of simple menu in console
+
+        """
+        self.menu()
     
 
     def menu(self):
